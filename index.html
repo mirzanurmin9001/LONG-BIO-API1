@@ -1,0 +1,1975 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FIRE TOPUP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background: #f0f4ff; }
+        
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #f0f4ff; }
+        ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #1a56db, #3b82f6); border-radius: 10px; }
+        
+        /* ===== ANIMATIONS ===== */
+        @keyframes fadeInUp { 
+            from { opacity: 0; transform: scale(0.95) translateY(20px); } 
+            to { opacity: 1; transform: scale(1) translateY(0); } 
+        }
+        .animate-fade-in { animation: fadeInUp 0.5s ease-out forwards; }
+        
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .slide-down { animation: slideDown 0.4s ease-out forwards; }
+        
+        /* ===== NOTICE SCROLL ===== */
+        .notice-scroll { animation: scroll-left 20s linear infinite; display: inline-block; white-space: nowrap; }
+        @keyframes scroll-left { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+        
+        /* ===== BUTTONS ===== */
+        .btn-primary {
+            background: linear-gradient(135deg, #1a56db, #3b82f6);
+            color: white;
+            padding: 14px 28px;
+            border-radius: 14px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(26, 86, 219, 0.3);
+        }
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 35px rgba(26, 86, 219, 0.4);
+        }
+        .btn-primary:active { transform: scale(0.95); }
+        
+        .btn-outline {
+            background: transparent;
+            color: #1a56db;
+            padding: 12px 24px;
+            border-radius: 14px;
+            font-weight: 700;
+            border: 2px solid #1a56db;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .btn-outline:hover {
+            background: #1a56db;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        /* ===== HEADER ===== */
+        .gradient-header {
+            background: linear-gradient(135deg, #0f3b8c, #1a56db, #3b82f6);
+        }
+        
+        .balance-badge {
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 14px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .notice-bar {
+            background: linear-gradient(135deg, #0f3b8c, #1a56db);
+            color: white;
+        }
+        
+        /* ===== PRODUCT CARDS - UNIQUE DESIGN ===== */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+        }
+        
+        .product-card-unique {
+            background: white;
+            border-radius: 20px;
+            padding: 18px 14px 16px;
+            border: 2px solid #e8edff;
+            cursor: pointer;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(26, 86, 219, 0.04);
+        }
+        
+        .product-card-unique::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at center, rgba(26, 86, 219, 0.06), transparent 70%);
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        
+        .product-card-unique:hover {
+            transform: translateY(-6px) scale(1.02);
+            box-shadow: 0 16px 40px rgba(26, 86, 219, 0.15);
+            border-color: #1a56db;
+        }
+        
+        .product-card-unique:hover::before {
+            opacity: 1;
+        }
+        
+        .product-card-unique.selected {
+            border-color: #1a56db;
+            background: linear-gradient(135deg, #e8edff, #dbeafe);
+            box-shadow: 0 8px 30px rgba(26, 86, 219, 0.2);
+            transform: scale(1.02);
+        }
+        
+        .product-card-unique.selected::after {
+            content: '✓';
+            position: absolute;
+            top: 8px;
+            right: 10px;
+            color: white;
+            background: #1a56db;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 800;
+            box-shadow: 0 2px 10px rgba(26, 86, 219, 0.3);
+        }
+        
+        .product-card-unique .product-emoji {
+            font-size: 28px;
+            margin-bottom: 6px;
+            display: block;
+        }
+        
+        .product-card-unique .product-name {
+            font-size: 12px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 2px;
+            line-height: 1.3;
+        }
+        
+        .product-card-unique .product-price {
+            font-size: 18px;
+            font-weight: 900;
+            color: #1a56db;
+        }
+        
+        .product-card-unique .product-price span {
+            font-size: 11px;
+            font-weight: 400;
+            color: #94a3b8;
+        }
+        
+        .product-card-unique .stock-badge {
+            font-size: 8px;
+            padding: 2px 12px;
+            border-radius: 50px;
+            display: inline-block;
+            margin-top: 4px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        
+        .stock-badge.in-stock {
+            background: #dcfce7;
+            color: #166534;
+        }
+        
+        .stock-badge.out-stock {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        /* ===== PAYMENT ICONS (SVG) ===== */
+        .payment-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: 900;
+            color: white;
+            margin: 0 auto 8px;
+            transition: all 0.3s;
+        }
+        .payment-icon.bkash { background: linear-gradient(135deg, #e2136e, #c0115e); }
+        .payment-icon.nagad { background: linear-gradient(135deg, #f7941d, #e07c0a); }
+        .payment-icon.rocket { background: linear-gradient(135deg, #8c3494, #6e2675); }
+        
+        .method-card {
+            background: white;
+            border-radius: 16px;
+            padding: 14px 8px;
+            border: 2px solid #e8edff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        .method-card:hover {
+            border-color: #1a56db;
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(26, 86, 219, 0.12);
+        }
+        .method-card .label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        
+        /* ===== FOOTER - PREMIUM ===== */
+        .footer-premium {
+            background: linear-gradient(180deg, #ffffff, #f8faff);
+            border-radius: 24px 24px 0 0;
+            padding: 28px 20px 20px;
+            border: 1px solid rgba(26, 86, 219, 0.06);
+            box-shadow: 0 -4px 30px rgba(26, 86, 219, 0.04);
+            margin-top: 20px;
+        }
+        
+        .footer-premium .brand {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .footer-premium .brand h2 {
+            font-size: 22px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #0f3b8c, #1a56db);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .footer-premium .brand p {
+            font-size: 12px;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+        
+        .footer-premium .social-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        
+        .footer-premium .social-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 6px;
+            background: #f1f5f9;
+            border-radius: 12px;
+            border: 1px solid #e8edff;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: #0f172a;
+            font-weight: 600;
+            font-size: 10px;
+        }
+        
+        .footer-premium .social-btn:hover {
+            background: #e8edff;
+            border-color: #1a56db;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(26, 86, 219, 0.1);
+        }
+        
+        .footer-premium .social-btn i { font-size: 16px; }
+        
+        .footer-premium .contact-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: #f8faff;
+            border-radius: 12px;
+            border: 1px solid #e8edff;
+            text-decoration: none;
+            color: #0f172a;
+            transition: all 0.3s ease;
+            margin-bottom: 8px;
+        }
+        
+        .footer-premium .contact-item:hover {
+            background: #e8edff;
+            border-color: #1a56db;
+        }
+        
+        .footer-premium .contact-item .left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 13px;
+        }
+        
+        .footer-premium .contact-item .time {
+            font-size: 9px;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+        
+        .footer-premium .copyright {
+            text-align: center;
+            border-top: 1px solid #e8edff;
+            padding-top: 16px;
+            margin-top: 16px;
+        }
+        
+        .footer-premium .copyright p {
+            font-size: 10px;
+            color: #94a3b8;
+        }
+        
+        .footer-premium .copyright a {
+            color: #1a56db;
+            font-weight: 800;
+            text-decoration: none;
+        }
+        
+        /* ===== FAB ===== */
+        #fab-container.is-open #fab-toggler { background-color: #dc2626; }
+        #fab-container.is-open #fab-icon-open { transform: rotate(-180deg) scale(0); opacity: 0; }
+        #fab-container.is-open #fab-icon-close { transform: scale(1) rotate(0); opacity: 1; }
+        #fab-container.is-open #fab-options { transform: translateY(0); opacity: 1; pointer-events: auto; }
+        
+        /* ===== NAV ===== */
+        .nav-item.active-tab { color: #1a56db !important; }
+        .nav-item.active-tab i { color: #1a56db !important; }
+        
+        .add-money-btn {
+            background: linear-gradient(135deg, #1a56db, #3b82f6) !important;
+            box-shadow: 0 4px 25px rgba(26, 86, 219, 0.4) !important;
+        }
+        .add-money-btn:hover { transform: scale(1.08) !important; }
+        
+        /* ===== AUTH OVERLAY ===== */
+        .auth-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 59, 140, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .auth-card {
+            background: white;
+            border-radius: 28px;
+            padding: 36px 28px 32px;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.3);
+            animation: fadeInUp 0.5s ease-out;
+        }
+        
+        .auth-card .brand-text {
+            font-size: 28px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #0f3b8c, #1a56db);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+        }
+        
+        .auth-card .sub-text {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 13px;
+            font-weight: 500;
+            margin-top: 2px;
+        }
+        
+        .auth-card .toggle-bar {
+            display: flex;
+            background: #f1f5f9;
+            border-radius: 14px;
+            padding: 4px;
+            margin: 20px 0;
+        }
+        
+        .auth-card .toggle-bar button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 14px;
+            transition: all 0.3s;
+            cursor: pointer;
+            background: transparent;
+            color: #94a3b8;
+        }
+        
+        .auth-card .toggle-bar button.active {
+            background: white;
+            color: #1a56db;
+            box-shadow: 0 2px 15px rgba(26, 86, 219, 0.12);
+        }
+        
+        .auth-card input {
+            width: 100%;
+            padding: 14px 16px;
+            background: #f1f5f9;
+            border: 2px solid transparent;
+            border-radius: 14px;
+            font-size: 14px;
+            transition: all 0.3s;
+            margin-bottom: 12px;
+        }
+        
+        .auth-card input:focus {
+            outline: none;
+            border-color: #1a56db;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(26, 86, 219, 0.08);
+        }
+        
+        .hidden { display: none !important; }
+        
+        /* ===== GAME CARDS ===== */
+        .game-card {
+            background: white;
+            border-radius: 18px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid transparent;
+            box-shadow: 0 2px 10px rgba(26, 86, 219, 0.04);
+        }
+        
+        .game-card:hover {
+            transform: translateY(-6px);
+            border-color: #1a56db;
+            box-shadow: 0 12px 35px rgba(26, 86, 219, 0.12);
+        }
+        
+        .game-card .img-wrap {
+            width: 100%;
+            aspect-ratio: 1;
+            background: #f1f5f9;
+            overflow: hidden;
+        }
+        
+        .game-card .img-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s;
+        }
+        
+        .game-card:hover .img-wrap img {
+            transform: scale(1.08);
+        }
+        
+        .game-card .name {
+            padding: 10px 8px;
+            text-align: center;
+            font-size: 11px;
+            font-weight: 700;
+            color: #0f172a;
+            background: white;
+            border-top: 1px solid #f1f5f9;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== AUTH OVERLAY (Shown on top of everything) ===== -->
+<div id="authOverlay" class="auth-overlay">
+    <div class="auth-card">
+        <div class="brand-text">FIRE TOPUP</div>
+        <p class="sub-text">Best TopUp Service in Bangladesh</p>
+
+        <div class="toggle-bar">
+            <button id="loginTabBtn" class="active" onclick="switchAuthTab('login')">Login</button>
+            <button id="registerTabBtn" onclick="switchAuthTab('register')">Register</button>
+        </div>
+
+        <!-- Login Form -->
+        <div id="loginForm">
+            <input type="email" id="loginEmail" placeholder="Email Address">
+            <input type="password" id="loginPass" placeholder="Password">
+            <button onclick="handleLogin()" class="btn-primary w-full text-center">LOG IN</button>
+        </div>
+
+        <!-- Register Form -->
+        <div id="registerForm" class="hidden">
+            <input type="text" id="regName" placeholder="Full Name">
+            <input type="email" id="regEmail" placeholder="Email Address">
+            <input type="number" id="regPhone" placeholder="Phone Number">
+            <input type="password" id="regPass" placeholder="Password (6+ chars)">
+            <button onclick="handleRegister()" class="w-full bg-[#0f3b8c] text-white py-3.5 rounded-xl font-bold shadow-lg hover:bg-[#0a2a5e] transition">CREATE ACCOUNT</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== APP CONTENT ===== -->
+<div id="appContent" class="hidden relative max-w-md mx-auto bg-[#f0f4ff] min-h-screen shadow-2xl">
+
+    <!-- ===== HEADER ===== -->
+    <header class="gradient-header p-4 sticky top-0 z-40 flex justify-between items-center shadow-lg">
+        <div>
+            <h1 class="text-white font-extrabold text-lg tracking-tight">FIRE TOPUP</h1>
+        </div>
+        <div class="balance-badge">
+            <i class="fas fa-wallet mr-1"></i> ৳ <span id="headerBalance">0</span>
+        </div>
+    </header>
+
+    <!-- ===== NOTICE ===== -->
+    <div class="notice-bar py-2.5 overflow-hidden shadow-inner flex items-center">
+        <div class="px-3 bg-[#0a2a5e] h-full flex items-center z-10 font-bold text-xs uppercase tracking-wider py-1">📢</div>
+        <div class="flex-1 overflow-hidden relative">
+            <div id="noticeText" class="notice-scroll text-sm font-medium pl-4">FIRE TOPUP ১০০% বিশ্বস্ত ওয়েবসাইট। টপ-আপ করতে কোনো সমস্যা হলে অনুগ্রহ করে অ্যাডমিনকে মেসেজ করুন...</div>
+        </div>
+    </div>
+
+    <!-- ===== MAIN ===== -->
+    <main class="p-3 relative pb-24">
+        
+        <!-- ===== HOME SECTION ===== -->
+        <section id="homeSec" class="animate-fade-in">
+            
+            <!-- Banner Slider -->
+            <div id="bannerContainer" class="mb-5 rounded-2xl overflow-hidden shadow-lg h-44 bg-gray-200 relative">
+                <div id="sliderWrapper" class="flex h-full w-full transition-transform duration-500 ease-out">
+                    <img src="https://placehold.co/600x300/1a56db/FFF?text=Loading..." class="w-full h-full object-cover flex-shrink-0">
+                </div>
+                <div id="sliderDots" class="absolute bottom-3 left-0 right-0 flex justify-center gap-2 z-10"></div>
+            </div>
+
+            <!-- Games Grid -->
+            <div id="servicesList" class="space-y-6 mb-8">
+                <div class="col-span-3 text-center py-10">
+                    <i class="fas fa-spinner fa-spin text-[#1a56db] text-3xl"></i>
+                    <p class="text-gray-400 text-sm mt-3 font-medium">Loading Games...</p>
+                </div>
+            </div>
+
+            <!-- Latest Orders -->
+            <div class="mt-6 mb-6">
+                <h3 class="text-center font-bold text-[#0f3b8c] text-lg mb-4">📋 Latest Orders</h3>
+                <div id="latestOrdersList" class="space-y-3 px-1">
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between animate-pulse">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-gray-200 rounded-full"></div>
+                            <div><div class="h-4 bg-gray-200 rounded w-24 mb-2"></div><div class="h-3 bg-gray-200 rounded w-32"></div></div>
+                        </div>
+                        <div class="h-6 bg-gray-200 rounded-full w-20"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Promo Banner -->
+            <div id="promoBannerContainer" class="mt-6 mb-6 px-1 hidden">
+                <a id="promoBannerLink" href="#" target="_blank">
+                    <img id="promoBannerImg" src="" class="w-full rounded-2xl shadow-md object-cover">
+                </a>
+            </div>
+            
+            <!-- ===== PREMIUM FOOTER ===== -->
+            <div class="footer-premium">
+                <div class="brand">
+                    <h2>FIRE TOPUP</h2>
+                    <p>🚀 Free Fire Diamond TopUp • Largest in Bangladesh</p>
+                </div>
+
+                <div class="bg-blue-50/60 border border-blue-100 rounded-xl p-3 mb-4">
+                    <p class="text-xs text-gray-600 text-center leading-relaxed">
+                        <i class="fas fa-info-circle text-[#1a56db] mr-1"></i>
+                        <b>নোটিশ:</b> যেকোন অর্ডার জনিত সমস্যায় মেসেজারে অর্ডারের স্ক্রিনশট এবং পেমেন্টের ট্রানজেকশন আইডি লিখে মেসেজ দিন। ১৮ বছরের নিচে অভিভাবকের অনুমতি ছাড়া অর্ডার করা সম্পূর্ণভাবে নিষিদ্ধ।
+                    </p>
+                </div>
+
+                <!-- Social Links -->
+                <div class="social-grid">
+                    <a id="aboutFacebook" href="#" target="_blank" class="social-btn"><i class="fab fa-facebook-f text-[#1877F2]"></i> FB</a>
+                    <a id="aboutYoutube" href="#" target="_blank" class="social-btn"><i class="fab fa-youtube text-[#FF0000]"></i> YT</a>
+                    <a id="aboutTelegram" href="#" target="_blank" class="social-btn"><i class="fab fa-telegram-plane text-[#0088cc]"></i> TG</a>
+                    <a id="aboutWhatsapp" href="#" target="_blank" class="social-btn"><i class="fab fa-whatsapp text-[#25D366]"></i> WA</a>
+                </div>
+                
+                <!-- Contact -->
+                <h3 class="font-bold text-[#0f3b8c] text-sm text-center mb-3">📞 Contact Us</h3>
+                <div>
+                    <a id="contactWhatsapp" href="#" class="contact-item">
+                        <div class="left"><i class="fab fa-whatsapp text-[#25D366] text-lg"></i> Whatsapp HelpLine</div>
+                        <span class="time">সকাল ৮টা - রাত ১২টা</span>
+                    </a>
+                    <a id="contactTelegram" href="#" class="contact-item">
+                        <div class="left"><i class="fab fa-telegram-plane text-[#0088cc] text-lg"></i> Telegram HelpLine</div>
+                        <span class="time">সকাল ৮টা - রাত ১২টা</span>
+                    </a>
+                    <a id="contactFacebook" href="#" class="contact-item">
+                        <div class="left"><i class="fab fa-facebook-f text-[#1877F2] text-lg"></i> Facebook HelpLine</div>
+                        <span class="time">সকাল ৮টা - রাত ১২টা</span>
+                    </a>
+                </div>
+
+                <div class="copyright">
+                    <p>© 2026 FIRE TOPUP| All Rights Reserved<br>
+                    Developed By <a href="https://developeriasan.xyz" target="_blank" id="developerCredit">Developer Iasan</a></p>
+                </div>
+            </div>
+            <!-- ===== END FOOTER ===== -->
+
+        </section>
+
+        <!-- ===== TOPUP SECTION ===== -->
+        <section id="topupSec" class="hidden animate-fade-in pb-10">
+            <div class="flex items-center gap-3 mb-4 p-1">
+                <button onclick="showSec('home')" class="text-gray-600 hover:text-[#1a56db] w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#e8edff]">
+                    <i class="fas fa-arrow-left text-lg"></i>
+                </button>
+                <h2 class="text-lg font-bold text-[#0f3b8c]" id="topupGameTitle">Game Name</h2>
+            </div>
+
+            <div class="bg-white p-3 rounded-2xl shadow-sm flex items-center gap-4 mb-4 border border-gray-100">
+                <img id="topupGameImg" src="" class="w-16 h-16 rounded-xl object-cover shadow-sm">
+                <div>
+                    <h3 class="font-bold text-gray-800 text-base" id="topupSubTitle">FF UID TOPUP</h3>
+                    <p class="text-xs text-gray-400 font-medium">Game / Topup</p>
+                </div>
+            </div>
+
+            <!-- Player ID -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm mb-4 border border-gray-100">
+                <div id="playerIdSection">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="bg-[#1a56db] text-white w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold shadow-md">1</span>
+                        <h3 class="font-bold text-gray-700 text-sm">Player ID</h3>
+                    </div>
+                    <input type="number" id="gamePlayerId" placeholder="Enter Player ID" class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl focus:outline-none focus:border-[#1a56db] focus:bg-white transition font-bold text-gray-700 tracking-wider text-lg">
+                    
+                    <!-- UID Check Button - REMOVED as requested -->
+                </div>
+            </div>
+
+            <!-- Products -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm mb-4 border border-gray-100">
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="bg-[#1a56db] text-white w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold shadow-md">2</span>
+                    <h3 class="font-bold text-gray-700 text-sm">Select Package</h3>
+                </div>
+
+                <div id="productLoader" class="text-center py-10 hidden">
+                    <i class="fas fa-spinner fa-spin text-[#1a56db] text-2xl"></i>
+                </div>
+
+                <div id="productsGrid" class="product-grid">
+                    <!-- Products will be injected via JS -->
+                </div>
+            </div>
+
+            <!-- Total & Buy -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm mb-4 border border-gray-100">
+                <div>
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-sm font-bold text-gray-600">Total Payable</span>
+                        <span class="text-2xl font-extrabold text-[#1a56db]">৳ <span id="totalPrice">0</span></span>
+                    </div>
+                    <button onclick="processOrder()" class="btn-primary w-full text-center flex justify-center items-center gap-2">
+                         BUY NOW
+                    </button>
+                </div>
+            </div>
+
+            <!-- Rules -->
+            <div id="gameRulesBox" class="bg-blue-50 border border-blue-200 p-4 rounded-xl shadow-sm mb-6 hidden">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="fas fa-info-circle text-[#1a56db]"></i>
+                    <h3 class="font-bold text-[#1a56db] text-sm">Important Rules</h3>
+                </div>
+                <p id="gameRulesText" class="text-xs text-blue-800 leading-relaxed font-medium"></p>
+            </div>
+        </section>
+
+        <!-- ===== ADD MONEY SECTION ===== -->
+        <section id="addmoneySec" class="hidden animate-fade-in">
+            <h2 class="font-bold text-xl text-[#0f3b8c] mb-4 px-2">Add Money</h2>
+            
+            <div id="autoPaymentView" class="hidden">
+                <div class="flex bg-gray-100 p-1 rounded-lg mb-6">
+                    <button class="w-full py-2 rounded-md font-bold text-sm bg-white shadow text-[#1a56db] transition">Automatic Payment</button>
+                </div>
+                
+                <div id="autoPaymentMethodsGrid" class="grid grid-cols-3 gap-3 mb-6">
+                    <div onclick="showAutoPaymentForm('bKash')" class="method-card">
+                        <div class="payment-icon bkash">bK</div>
+                        <span class="label">bKash</span>
+                    </div>
+                    <div onclick="showAutoPaymentForm('Nagad')" class="method-card">
+                        <div class="payment-icon nagad">NG</div>
+                        <span class="label">Nagad</span>
+                    </div>
+                    <div onclick="showAutoPaymentForm('Rocket')" class="method-card">
+                        <div class="payment-icon rocket">RK</div>
+                        <span class="label">Rocket</span>
+                    </div>
+                </div>
+
+                <div id="autoPaymentFormContainer" class="hidden bg-white p-5 rounded-2xl shadow-lg border border-gray-100">
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="flex items-center gap-2">
+                            <div id="autoFormIcon" class="payment-icon bkash" style="width:40px;height:40px;font-size:16px;">bK</div>
+                            <h3 id="autoFormMethodName" class="font-bold text-lg text-[#0f3b8c]">Method</h3>
+                        </div>
+                        <button onclick="resetAutoAddMoney()" class="text-gray-400 hover:text-red-500"><i class="fas fa-times"></i></button>
+                    </div>
+                    
+                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 mb-4 flex justify-between items-center">
+                        <div>
+                            <p class="text-[10px] text-gray-500">Send Money (Personal)</p>
+                            <p id="autoAdminNumber" class="font-mono font-bold text-lg tracking-wider text-gray-700">Loading...</p>
+                        </div>
+                        <button onclick="copyAutoNumber()" class="bg-white p-2 rounded shadow-sm text-[#1a56db]"><i class="far fa-copy"></i></button>
+                    </div>
+
+                    <div class="space-y-4">
+                        <input type="text" id="autoDepTrx" placeholder="Transaction ID" class="w-full bg-gray-50 border border-gray-200 p-3 rounded-lg font-bold uppercase focus:outline-none focus:border-[#1a56db] transition">
+                        <button onclick="verifyAutoPayment()" class="btn-primary w-full text-center">Verify Payment</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="manualPaymentView" class="hidden">
+                <div class="flex bg-gray-100 p-1 rounded-lg mb-6">
+                    <button onclick="toggleAddMoneyView('form')" id="btnAddmoneyView" class="w-1/2 py-2 rounded-md font-bold text-sm bg-white shadow text-[#1a56db] transition">Add Money</button>
+                    <button onclick="toggleAddMoneyView('history')" id="btnHistoryView" class="w-1/2 py-2 rounded-md font-bold text-sm text-gray-500 transition">Deposit History</button>
+                </div>
+
+                <div id="addMoneyContent">
+                    <div id="paymentMethodsGrid" class="grid grid-cols-3 gap-3 mb-6">
+                        <div onclick="showPaymentForm('bKash')" class="method-card">
+                            <div class="payment-icon bkash">bK</div>
+                            <span class="label">bKash</span>
+                        </div>
+                        <div onclick="showPaymentForm('Nagad')" class="method-card">
+                            <div class="payment-icon nagad">NG</div>
+                            <span class="label">Nagad</span>
+                        </div>
+                        <div onclick="showPaymentForm('Rocket')" class="method-card">
+                            <div class="payment-icon rocket">RK</div>
+                            <span class="label">Rocket</span>
+                        </div>
+                    </div>
+
+                    <div id="paymentFormContainer" class="hidden bg-white p-5 rounded-2xl shadow-lg border border-gray-100">
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="flex items-center gap-2">
+                                <div id="formIcon" class="payment-icon bkash" style="width:40px;height:40px;font-size:16px;">bK</div>
+                                <h3 id="formMethodName" class="font-bold text-lg text-[#0f3b8c]">Method</h3>
+                            </div>
+                            <button onclick="resetAddMoney()" class="text-gray-400 hover:text-red-500"><i class="fas fa-times"></i></button>
+                        </div>
+                        
+                        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 mb-4 flex justify-between items-center">
+                            <div>
+                                <p class="text-[10px] text-gray-500">Send Money (Personal)</p>
+                                <p id="adminNumber" class="font-mono font-bold text-lg tracking-wider text-gray-700">Loading...</p>
+                            </div>
+                            <button onclick="copyNumber()" class="bg-white p-2 rounded shadow-sm text-[#1a56db]"><i class="far fa-copy"></i></button>
+                        </div>
+
+                        <div class="space-y-4">
+                            <input type="number" id="depAmount" placeholder="Amount" class="w-full bg-gray-50 border border-gray-200 p-3 rounded-lg font-bold focus:outline-none focus:border-[#1a56db] transition">
+                            <input type="text" id="depTrx" placeholder="Transaction ID" class="w-full bg-gray-50 border border-gray-200 p-3 rounded-lg font-bold uppercase focus:outline-none focus:border-[#1a56db] transition">
+                            <button onclick="submitDeposit()" class="btn-primary w-full text-center">Verify & Add Money</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="depositHistoryContent" class="hidden">
+                    <div id="depositHistoryList" class="space-y-3 px-1"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== TUTORIAL SECTION ===== -->
+        <section id="tutorialSec" class="hidden animate-fade-in pb-20">
+            <div class="px-5 pt-6 mb-4">
+                <h2 class="text-2xl font-bold text-[#0f3b8c]">🎬 Tutorials</h2>
+            </div>
+            <div id="tutorialListContainer" class="space-y-6"></div>
+        </section>
+
+        <!-- ===== ACCOUNT SECTION ===== -->
+        <section id="accountSec" class="hidden animate-fade-in">
+            <div class="bg-white p-6 rounded-2xl shadow-sm mb-4 text-center border border-gray-100">
+                <div class="w-20 h-20 bg-[#e8edff] rounded-full mx-auto flex items-center justify-center text-[#1a56db] text-3xl mb-3 shadow-inner">
+                    <i class="fas fa-user-circle text-5xl"></i>
+                </div>
+                
+                <h2 id="profileName" class="font-bold text-xl text-[#0f3b8c]">User Name</h2>
+                <p id="profileEmail" class="text-xs text-gray-500 mb-6 font-mono">user@email.com</p>
+
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="bg-[#e8edff] p-3 rounded-2xl border border-[#1a56db]/20 flex flex-col items-center justify-center">
+                        <div class="w-8 h-8 rounded-full bg-[#1a56db]/10 flex items-center justify-center text-[#1a56db] mb-1">
+                            <i class="fas fa-wallet text-sm"></i>
+                        </div>
+                        <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Balance</p>
+                        <p class="text-sm font-extrabold text-[#1a56db]">৳ <span id="profileBalance">0</span></p>
+                    </div>
+
+                    <div class="bg-[#e8edff] p-3 rounded-2xl border border-[#1a56db]/20 flex flex-col items-center justify-center">
+                        <div class="w-8 h-8 rounded-full bg-[#1a56db]/10 flex items-center justify-center text-[#1a56db] mb-1">
+                            <i class="fas fa-shopping-bag text-sm"></i>
+                        </div>
+                        <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Orders</p>
+                        <p class="text-sm font-extrabold text-[#1a56db]" id="profileTotalOrders">0</p>
+                    </div>
+
+                    <div class="bg-[#e8edff] p-3 rounded-2xl border border-[#1a56db]/20 flex flex-col items-center justify-center">
+                        <div class="w-8 h-8 rounded-full bg-[#1a56db]/10 flex items-center justify-center text-[#1a56db] mb-1">
+                            <i class="fas fa-coins text-sm"></i>
+                        </div>
+                        <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Spent</p>
+                        <p class="text-sm font-extrabold text-[#1a56db]">৳ <span id="profileTotalSpent">0</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
+                <button onclick="showSec('history')" class="w-full flex items-center justify-between p-4 border-b border-gray-100 hover:bg-[#e8edff] transition">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-[#e8edff] flex items-center justify-center text-[#1a56db]"><i class="fas fa-history"></i></div>
+                        <span class="text-sm font-semibold text-gray-700">Order History</span>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
+                </button>
+                
+                <button onclick="showSec('addmoney')" class="w-full flex items-center justify-between p-4 border-b border-gray-100 hover:bg-[#e8edff] transition">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-[#e8edff] flex items-center justify-center text-[#1a56db]"><i class="fas fa-plus-circle"></i></div>
+                        <span class="text-sm font-semibold text-gray-700">Add Money</span>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
+                </button>
+
+                <button onclick="handleLogout()" class="w-full flex items-center justify-between p-4 hover:bg-red-50 text-red-500 transition group">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center group-hover:bg-red-200 transition"><i class="fas fa-sign-out-alt"></i></div>
+                        <span class="text-sm font-bold">Log Out</span>
+                    </div>
+                </button>
+            </div>
+            
+            <!-- Footer in Profile -->
+            <div class="footer-premium mt-4" style="border-radius:20px;">
+                <div class="copyright" style="border-top:none;padding-top:0;margin-top:0;">
+                    <p>© 2026 FIRE TOPUP | All Rights Reserved<br>
+                    Developed By <a href="https://developeriasan.xyz" target="_blank">Developer Noman</a></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== HISTORY SECTION ===== -->
+        <section id="historySec" class="hidden animate-fade-in pb-24">
+            <div class="px-4 pt-4 mb-2">
+                <h2 class="text-xl font-bold text-[#0f3b8c] border-l-4 border-[#1a56db] pl-2">Order History</h2>
+            </div>
+            <div id="historyList" class="px-4"></div>
+        </section>
+
+    </main>
+    
+    <!-- ===== FAB ===== -->
+    <div id="fabContainer" class="fixed bottom-20 right-4 z-50">
+        <div class="flex items-center gap-2">
+            <div id="fabHelpText" class="bg-[#1a56db] text-white text-xs font-semibold px-2 py-1.5 rounded-lg shadow-md transition-opacity duration-300">
+                সাহায্য লাগবে ?
+            </div>
+            <div class="relative flex flex-col items-center">
+                <div id="fabOptions" class="absolute bottom-14 space-y-1.5 transition-all duration-300 ease-out transform translate-y-4 opacity-0 pointer-events-none">
+                    <a id="linkWhatsapp" href="#" target="_blank" class="flex items-center justify-center w-10 h-10 bg-white rounded-full shadow-lg hover:bg-gray-100 no-underline">
+                        <i class="fab fa-whatsapp text-xl text-[#25D366]"></i>
+                    </a>
+                    <a id="linkTelegram" href="#" target="_blank" class="flex items-center justify-center w-10 h-10 bg-white rounded-full shadow-lg hover:bg-gray-100 no-underline">
+                        <i class="fab fa-telegram-plane text-xl text-[#0088cc]"></i>
+                    </a>
+                </div>
+                <button id="fabToggler" onclick="toggleFabMenu()" class="relative w-12 h-12 bg-[#1a56db] rounded-full flex items-center justify-center text-white text-xl shadow-xl transition-all duration-300 ease-in-out hover:bg-[#0f3b8c] focus:outline-none">
+                    <i id="fabIconOpen" class="fas fa-phone-alt transition-all duration-300 transform"></i>
+                    <i id="fabIconClose" class="fas fa-times absolute transition-all duration-300 transform scale-0 opacity-0 -rotate-180"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== BOTTOM NAV ===== -->
+    <nav class="fixed bottom-0 w-full bg-white/95 backdrop-blur-md border-t border-gray-100 py-2 px-4 shadow-[0_-5px_30px_rgba(0,0,0,0.05)] z-40 max-w-md mx-auto left-0 right-0">
+        <div class="flex justify-between items-center">
+            <button onclick="showSec('home')" class="nav-item flex flex-col items-center text-gray-400 active-tab" id="navHome">
+                <i class="fas fa-home text-xl"></i><span class="text-[10px] mt-1 font-medium">Home</span>
+            </button>
+            <button onclick="showSec('tutorial')" class="nav-item flex flex-col items-center text-gray-400" id="navTutorial">
+                <i class="fab fa-youtube text-xl"></i><span class="text-[10px] mt-1 font-medium">Tutorial</span>
+            </button>
+            
+            <button onclick="showSec('addmoney')" class="add-money-btn -mt-8 h-14 w-14 rounded-full flex items-center justify-center text-white border-4 border-white transform active:scale-90 transition shadow-lg">
+                <i class="fas fa-plus text-2xl"></i>
+            </button>
+            
+            <button onclick="showSec('history')" class="nav-item flex flex-col items-center text-gray-400" id="navHistory">
+                <i class="fas fa-history text-xl"></i><span class="text-[10px] mt-1 font-medium">History</span>
+            </button>
+            <button onclick="showSec('account')" class="nav-item flex flex-col items-center text-gray-400" id="navAccount">
+                <i class="fas fa-user text-xl"></i><span class="text-[10px] mt-1 font-medium">Account</span>
+            </button>
+        </div>
+    </nav>
+</div>
+
+<script>
+// ===== FIREBASE CONFIG =====
+const firebaseConfig = {
+  apiKey: "AIzaSyBUfgGebQf6nTBsXQvdGd-9xnCIxiLfHRc",
+  authDomain: "topup-9f20d.firebaseapp.com",
+  databaseURL: "https://topup-9f20d-default-rtdb.firebaseio.com",
+  projectId: "topup-9f20d",
+  storageBucket: "topup-9f20d.firebasestorage.app",
+  messagingSenderId: "736162240173",
+  appId: "1:736162240173:web:850441f99f8fc3cf735824",
+  measurementId: "G-GT8JPXQPH2"
+};
+
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+const rtdb = firebase.database();
+
+// ===== STATE =====
+let currentUser = null;
+let userBalance = 0;
+let selectedProduct = null;
+let selectedGameId = null;
+let selectedGameName = "";
+let selectedGameType = 'uid';
+let gamesData = {};
+let isAutoPayEnabled = false;
+let isLoggedIn = false;
+
+// ===== AUTH UI =====
+function switchAuthTab(tab) {
+    const loginTab = document.getElementById('loginTabBtn');
+    const registerTab = document.getElementById('registerTabBtn');
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    
+    if (tab === 'login') {
+        loginTab.classList.add('active');
+        registerTab.classList.remove('active');
+        loginForm.classList.remove('hidden');
+        registerForm.classList.add('hidden');
+    } else {
+        registerTab.classList.add('active');
+        loginTab.classList.remove('active');
+        loginForm.classList.add('hidden');
+        registerForm.classList.remove('hidden');
+    }
+}
+
+function handleRegister() {
+    const name = document.getElementById('regName').value;
+    const email = document.getElementById('regEmail').value;
+    const pass = document.getElementById('regPass').value;
+    if(!name || !email || !pass) return Swal.fire('Error', 'Please fill all fields', 'error');
+
+    Swal.showLoading();
+    auth.createUserWithEmailAndPassword(email, pass)
+        .then((cred) => db.collection('users').doc(cred.user.uid).set({
+            name: name, email: email, balance: 0, createdAt: new Date()
+        }))
+        .then(() => Swal.fire('Success', 'Account Created!', 'success'))
+        .catch((err) => Swal.fire('Error', err.message, 'error'));
+}
+
+function handleLogin() {
+    const email = document.getElementById('loginEmail').value;
+    const pass = document.getElementById('loginPass').value;
+    if(!email || !pass) return;
+    Swal.showLoading();
+    auth.signInWithEmailAndPassword(email, pass).catch((err) => Swal.fire('Login Failed', err.message, 'error'));
+}
+
+function handleLogout() { 
+    auth.signOut().then(() => {
+        isLoggedIn = false;
+        document.getElementById('authOverlay').classList.remove('hidden');
+        document.getElementById('appContent').classList.add('hidden');
+    });
+}
+
+// ===== AUTH STATE =====
+auth.onAuthStateChanged((user) => {
+    if (user) {
+        currentUser = user;
+        isLoggedIn = true;
+        document.getElementById('authOverlay').classList.add('hidden');
+        document.getElementById('appContent').classList.remove('hidden');
+        loadUserData(user.uid);
+        calculateUserStats(user.uid);
+        loadAppContent();
+    } else {
+        currentUser = null;
+        isLoggedIn = false;
+        document.getElementById('authOverlay').classList.remove('hidden');
+        document.getElementById('appContent').classList.add('hidden');
+    }
+});
+
+// ===== USER DATA =====
+function loadUserData(uid) {
+    db.collection('users').doc(uid).onSnapshot((doc) => {
+        if (doc.exists) {
+            const data = doc.data();
+            userBalance = data.balance || 0;
+            document.getElementById('headerBalance').innerText = userBalance;
+            document.getElementById('profileName').innerText = data.name || "User";
+            document.getElementById('profileEmail').innerText = data.email;
+            document.getElementById('profileBalance').innerText = userBalance;
+        }
+    });
+}
+
+function calculateUserStats(uid) {
+    document.getElementById('profileTotalOrders').innerText = "...";
+    document.getElementById('profileTotalSpent').innerText = "...";
+
+    db.collection('orders').where('userId', '==', uid).get().then((snapshot) => {
+        let totalOrders = 0;
+        let totalSpent = 0;
+
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            totalOrders++;
+            const status = data.status ? data.status.toLowerCase() : '';
+            if (status === 'success' || status === 'complete' || status === 'completed') {
+                totalSpent += parseInt(data.price || 0);
+            }
+        });
+
+        document.getElementById('profileTotalOrders').innerText = totalOrders;
+        document.getElementById('profileTotalSpent').innerText = totalSpent;
+    }).catch(err => {
+        console.error("Stats Error:", err);
+        document.getElementById('profileTotalOrders').innerText = "0";
+        document.getElementById('profileTotalSpent').innerText = "0";
+    });
+}
+
+// ===== LOAD APP =====
+function loadAppContent() {
+    db.collection("settings").doc("general").onSnapshot((doc) => {
+        if(doc.exists) {
+            const data = doc.data();
+            if(data.notice) document.getElementById('noticeText').innerText = data.notice;
+            const waNum = data.whatsapp ? String(data.whatsapp).replace(/\s/g, '') : "0";
+            const tgLink = data.telegram || "#";
+            const appLink = data.appLink || "#";
+            const fbLink = data.facebook || "#";
+            const ytLink = data.youtube || "#";
+            const waLink = `https://wa.me/${waNum}`;
+
+            const promoContainer = document.getElementById('promoBannerContainer');
+            const promoImg = document.getElementById('promoBannerImg');
+            const promoLink = document.getElementById('promoBannerLink');
+            if(data.promoImageUrl && promoContainer && promoImg && promoLink) {
+                promoImg.src = data.promoImageUrl;
+                promoLink.href = data.promoImageLink || "#";
+                promoContainer.classList.remove('hidden');
+            } else if(promoContainer) {
+                promoContainer.classList.add('hidden');
+            }
+
+            document.getElementById('linkWhatsapp').href = waLink;
+            document.getElementById('linkTelegram').href = tgLink;
+            document.getElementById('aboutFacebook').href = fbLink;
+            document.getElementById('aboutYoutube').href = ytLink;
+            document.getElementById('aboutTelegram').href = tgLink;
+            document.getElementById('aboutWhatsapp').href = waLink;
+            document.getElementById('contactWhatsapp').href = waLink;
+            document.getElementById('contactTelegram').href = tgLink;
+            document.getElementById('contactFacebook').href = fbLink;
+            
+            // Update logo in auth
+            if(data.logoUrl) {
+                // Logo removed from auth as requested
+            }
+        }
+    });
+
+    loadGamesAndCategories();
+    loadTutorials();
+    loadBanners();
+    loadRecentOrdersGlobal();
+}
+
+// ===== GAMES =====
+function loadGamesAndCategories() {
+    const listContainer = document.getElementById('servicesList');
+    listContainer.innerHTML = `<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-[#1a56db] text-3xl"></i><p class="text-gray-400 text-sm mt-3 font-medium">Loading Games...</p></div>`;
+    gamesData = {};
+
+    try {
+        db.collection("categories").orderBy("slot").get()
+        .then((categoriesSnap) => {
+            return Promise.all([
+                Promise.resolve(categoriesSnap),
+                db.collection("services").get()
+            ]);
+        })
+        .then(([categoriesSnap, servicesSnap]) => {
+            if (servicesSnap.empty) {
+                listContainer.innerHTML = `<div class="col-span-3 text-center text-gray-400">No Games Found</div>`;
+                return;
+            }
+
+            const categoriesMap = new Map();
+            categoriesSnap.forEach(doc => {
+                categoriesMap.set(doc.id, { ...doc.data(), games: [] });
+            });
+            
+            let uncategorizedGames = [];
+
+            servicesSnap.forEach(doc => {
+                const game = { id: doc.id, ...doc.data() };
+                gamesData[doc.id] = game;
+                
+                if (game.categoryId && categoriesMap.has(game.categoryId)) {
+                    categoriesMap.get(game.categoryId).games.push(game);
+                } else {
+                    uncategorizedGames.push(game);
+                }
+            });
+
+            listContainer.innerHTML = "";
+
+            categoriesMap.forEach((category) => {
+                if (category.games.length > 0) {
+                    let gamesHTML = '';
+                    category.games.forEach(item => {
+                        gamesHTML += `
+                         <div onclick="openTopUpPage('${item.id}', '${item.name}', '${item.image}')" 
+                              class="game-card">
+                            <div class="img-wrap">
+                                <img src="${item.image}" onerror="this.src='https://placehold.co/200/1a56db/FFF?text=Game'">
+                            </div>
+                            <div class="name">${item.name}</div>
+                        </div>`;
+                    });
+
+                    listContainer.innerHTML += `
+                    <div>
+                        <h3 class="font-bold text-[#0f3b8c] text-lg border-l-4 border-[#1a56db] pl-2 mb-3">${category.name}</h3>
+                        <div class="grid grid-cols-3 gap-3 px-1">
+                            ${gamesHTML}
+                        </div>
+                    </div>`;
+                }
+            });
+            
+            if(uncategorizedGames.length > 0) {
+                let gamesHTML = '';
+                uncategorizedGames.forEach(item => {
+                    gamesHTML += `
+                     <div onclick="openTopUpPage('${item.id}', '${item.name}', '${item.image}')" 
+                          class="game-card">
+                        <div class="img-wrap">
+                            <img src="${item.image}" onerror="this.src='https://placehold.co/200/94a3b8/FFF?text=Game'">
+                        </div>
+                        <div class="name">${item.name}</div>
+                    </div>`;
+                });
+                listContainer.innerHTML += `
+                <div>
+                    <h3 class="font-bold text-gray-500 text-lg border-l-4 border-gray-400 pl-2 mb-3">Others</h3>
+                    <div class="grid grid-cols-3 gap-3 px-1">
+                        ${gamesHTML}
+                    </div>
+                </div>`;
+            }
+        });
+    } catch (error) {
+        console.error("Failed to load games:", error);
+        listContainer.innerHTML = `<div class="text-center text-red-500">Failed to load games.</div>`;
+    }
+}
+
+// ===== TUTORIALS =====
+function loadTutorials() {
+    db.collection("tutorials").onSnapshot((snapshot) => {
+        const container = document.getElementById('tutorialListContainer');
+        container.innerHTML = "";
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            container.innerHTML += `
+                <div class="mx-5 bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 mb-6">
+                    <div class="relative w-full h-48 bg-gray-200 group cursor-pointer" onclick="window.open('${data.link}', '_blank')">
+                        <img src="${data.thumbnail}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/600x300/1a56db/FFF?text=Video'">
+                        <div class="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center"><i class="fas fa-play text-white text-4xl"></i></div>
+                    </div>
+                    <div class="p-4 text-center"><h3 class="font-bold text-gray-800">${data.title}</h3></div>
+                </div>`;
+        });
+    });
+}
+
+// ===== TOPUP =====
+function openTopUpPage(gameId, gameName, gameImg) {
+    if (!isLoggedIn) {
+        document.getElementById('authOverlay').classList.remove('hidden');
+        return;
+    }
+    
+    selectedGameId = gameId;
+    selectedGameName = gameName;
+    selectedProduct = null;
+    selectedGameType = gamesData[gameId].type || 'uid';
+
+    document.getElementById('totalPrice').innerText = "0";
+    document.getElementById('gamePlayerId').value = "";
+    document.getElementById('topupGameTitle').innerText = gameName;
+    document.getElementById('topupSubTitle').innerText = gameName + " ";
+    document.getElementById('topupGameImg').src = gameImg;
+
+    const playerSection = document.getElementById('playerIdSection');
+    playerSection.classList.toggle('hidden', selectedGameType === 'code');
+    
+    if (selectedGameType === 'code') {
+        document.getElementById('topupSubTitle').innerText += "(Instant Voucher)";
+    } else if (selectedGameType === 'auto-topup') {
+        document.getElementById('topupSubTitle').innerText += "(Auto Delivery)";
+    } else {
+        document.getElementById('topupSubTitle').innerText += "(Player ID)";
+    }
+
+    const rulesBox = document.getElementById('gameRulesBox');
+    const rulesText = document.getElementById('gameRulesText');
+    if(gamesData[gameId] && gamesData[gameId].rules) {
+        rulesText.innerText = gamesData[gameId].rules;
+        rulesBox.classList.remove('hidden');
+    } else {
+        rulesBox.classList.add('hidden');
+    }
+
+    showSec('topup');
+    
+    const grid = document.getElementById('productsGrid');
+    const loader = document.getElementById('productLoader');
+    grid.innerHTML = "";
+    loader.classList.remove('hidden');
+
+    db.collection('services').doc(gameId).collection('products').orderBy('price', 'asc').get()
+        .then((snapshot) => {
+            loader.classList.add('hidden');
+            if(snapshot.empty) {
+                grid.innerHTML = `<div class="col-span-2 text-center text-gray-400 py-4">No packages available</div>`;
+                return;
+            }
+            snapshot.forEach(doc => {
+                const prod = doc.data();
+                const card = document.createElement('div');
+                card.className = "product-card-unique";
+                card.onclick = () => selectProduct(card, prod.name, prod.price, doc.id);
+                
+                const isInStock = (prod.stockCount === undefined || prod.stockCount > 0);
+                const stockBadge = (selectedGameType === 'code' || selectedGameType === 'auto-topup') ? 
+                    `<span class="stock-badge ${isInStock ? 'in-stock' : 'out-stock'}">${isInStock ? 'In Stock' : 'Out of Stock'}</span>` : '';
+
+                const emojis = ['💎', '🔥', '⭐', '👑', '🚀', '💫', '🌟', '🎯', '🏆', '⚡'];
+                const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+
+                card.innerHTML = `
+                    <span class="product-emoji">${emoji}</span>
+                    <div class="product-name">${prod.name}</div>
+                    <div class="product-price">৳${prod.price} <span>BDT</span></div>
+                    ${stockBadge}
+                `;
+                grid.appendChild(card);
+            });
+        });
+}
+
+function selectProduct(element, name, price, id) {
+    document.querySelectorAll('.product-card-unique').forEach(el => el.classList.remove('selected'));
+    element.classList.add('selected');
+    selectedProduct = { id: id, name: name, price: parseInt(price) };
+    document.getElementById('totalPrice').innerText = selectedProduct.price;
+}
+
+async function processOrder() {
+    if (!isLoggedIn) {
+        document.getElementById('authOverlay').classList.remove('hidden');
+        return;
+    }
+    
+    let playerId = "N/A";
+    
+    if(selectedGameType === 'uid' || selectedGameType === 'auto-topup') {
+        playerId = document.getElementById('gamePlayerId').value.trim();
+        if(!playerId) return Swal.fire({ icon: 'warning', title: 'Missing ID', text: 'Please enter Player ID!' });
+    } else {
+        playerId = "Voucher Request";
+    }
+    
+    if(!selectedProduct) return Swal.fire({ icon: 'warning', title: 'Select Pack', text: 'Please select a recharge package!' });
+    if(userBalance < selectedProduct.price) return Swal.fire({ icon: 'error', title: 'Low Balance', text: 'Please Add Money first.' });
+
+    const result = await Swal.fire({
+        title: 'Confirm Purchase?',
+        html: `Item: ${selectedProduct.name}<br>Price: ৳${selectedProduct.price}`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#1a56db',
+        confirmButtonText: 'Yes, Buy Now'
+    });
+
+    if (result.isConfirmed) {
+        Swal.showLoading();
+        if (selectedGameType === 'code') {
+            processVoucherOrder();
+        } else if (selectedGameType === 'auto-topup') {
+            processAutoTopUpOrder(playerId);
+        } else {
+            processUidOrder(playerId);
+        }
+    }
+}
+
+async function processVoucherOrder() {
+    const stockRef = db.collection('services').doc(selectedGameId).collection('products').doc(selectedProduct.id).collection('stock');
+    const availableStockSnap = await stockRef.where('status', '==', 'available').limit(1).get();
+
+    if (availableStockSnap.empty) {
+        return Swal.fire('Out of Stock', 'Sorry, this product is currently unavailable.', 'error');
+    }
+
+    const stockDoc = availableStockSnap.docs[0];
+    const voucherCode = stockDoc.data().code;
+    const userRef = db.collection('users').doc(currentUser.uid);
+    
+    try {
+        await db.runTransaction(async (t) => {
+            const uDoc = await t.get(userRef);
+            const newBal = uDoc.data().balance - selectedProduct.price;
+            if(newBal < 0) throw new Error("Insufficient Balance");
+
+            t.update(userRef, { balance: newBal });
+            t.delete(stockDoc.ref);
+            t.update(db.collection('services').doc(selectedGameId).collection('products').doc(selectedProduct.id), {
+                stockCount: firebase.firestore.FieldValue.increment(-1)
+            });
+        });
+
+        await db.collection('orders').add({
+            userId: currentUser.uid, userName: currentUser.email, gameName: selectedGameName, gameId: selectedGameId,
+            productName: selectedProduct.name, price: selectedProduct.price, playerId: "Voucher Request", type: 'code',
+            status: 'success', redeemCode: voucherCode, date: new Date()
+        });
+
+        Swal.fire('Success', 'Voucher Purchased! Check History for Code.', 'success');
+        showSec('home');
+
+    } catch (e) {
+        Swal.fire('Error', 'Transaction Failed: ' + e.message, 'error');
+    }
+}
+
+function processUidOrder(playerId) {
+    const newBalance = userBalance - selectedProduct.price;
+    db.collection('users').doc(currentUser.uid).update({ balance: newBalance })
+    .then(() => {
+        return db.collection('orders').add({
+            userId: currentUser.uid, userName: currentUser.email, gameName: selectedGameName, gameId: selectedGameId,
+            playerId: playerId, productName: selectedProduct.name, price: selectedProduct.price, type: 'uid',
+            status: 'pending', date: new Date()
+        });
+    })
+    .then(() => {
+        Swal.fire('Success', 'Order Placed Successfully!', 'success');
+        showSec('home');
+    })
+    .catch(err => Swal.fire('Error', err.message, 'error'));
+}
+
+async function processAutoTopUpOrder(playerId) {
+    const settingsDoc = await db.collection("settings").doc("general").get();
+    if (!settingsDoc.exists) {
+        return Swal.fire('Configuration Error', 'Admin settings not found. Please contact support.', 'error');
+    }
+    const settings = settingsDoc.data();
+    const apiKey = settings.autoTopUpApiKey;
+    const apiUrl = settings.autoTopUpApiUrl;
+    const callbackUrl = settings.autoTopUpCallbackUrl;
+
+    if (!apiKey || !apiUrl || !callbackUrl) {
+        return Swal.fire('Configuration Error', 'Auto TopUp is not configured correctly.', 'error');
+    }
+
+    const stockRef = db.collection('services').doc(selectedGameId).collection('products').doc(selectedProduct.id).collection('stock');
+    const availableStockSnap = await stockRef.where('status', '==', 'available').limit(1).get();
+
+    if (availableStockSnap.empty) {
+        return Swal.fire('Out of Stock', 'Sorry, this product is currently unavailable.', 'error');
+    }
+    const stockDoc = availableStockSnap.docs[0];
+    const uniPinCode = stockDoc.data().code;
+
+    const userRef = db.collection('users').doc(currentUser.uid);
+    const orderRef = db.collection('orders').doc();
+
+    try {
+        await db.runTransaction(async (t) => {
+            const userDoc = await t.get(userRef);
+            const newBalance = userDoc.data().balance - selectedProduct.price;
+            if (newBalance < 0) throw new Error("Insufficient Balance");
+
+            t.update(userRef, { balance: newBalance });
+            t.delete(stockDoc.ref);
+            t.update(db.collection('services').doc(selectedGameId).collection('products').doc(selectedProduct.id), {
+                stockCount: firebase.firestore.FieldValue.increment(-1)
+            });
+            t.set(orderRef, {
+                userId: currentUser.uid, userName: currentUser.email, gameName: selectedGameName, gameId: selectedGameId,
+                playerId: playerId, productName: selectedProduct.name, price: selectedProduct.price, type: 'auto-topup',
+                status: 'pending', date: new Date(), usedUniPinCode: uniPinCode
+            });
+        });
+
+        const payload = {
+            api: apiKey,
+            playerid: playerId,
+            code: uniPinCode,
+            orderid: orderRef.id,
+            url: callbackUrl
+        };
+
+        fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        }).catch(err => console.error("Auto TopUp API Error:", err));
+
+        Swal.fire({
+            icon: 'info',
+            title: 'Processing Order',
+            text: 'Your top-up is being processed automatically. Please wait.',
+            timer: 7000,
+            timerProgressBar: true,
+            didOpen: () => { Swal.showLoading() }
+        });
+
+        setTimeout(() => {
+            orderRef.update({ status: 'success' }).then(() => {
+                Swal.fire('Success!', 'Your Top-Up has been completed successfully.', 'success');
+                showSec('home');
+            });
+        }, 7000);
+
+    } catch (e) {
+        Swal.fire('Transaction Failed', e.message, 'error');
+    }
+}
+
+// ===== HELPERS =====
+function showSec(secId) {
+    if (!isLoggedIn && secId !== 'home') {
+        document.getElementById('authOverlay').classList.remove('hidden');
+        return;
+    }
+    
+    document.querySelectorAll('main section').forEach(s => s.classList.add('hidden'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active-tab'));
+    document.getElementById(secId + 'Sec').classList.remove('hidden');
+    const navBtn = document.getElementById('nav' + secId.charAt(0).toUpperCase() + secId.slice(1));
+    if(navBtn) navBtn.classList.add('active-tab');
+    
+    if(secId === 'addmoney') {
+        if(isAutoPayEnabled) {
+            document.getElementById('autoPaymentView').classList.remove('hidden');
+            document.getElementById('manualPaymentView').classList.add('hidden');
+            resetAutoAddMoney();
+        } else {
+            document.getElementById('autoPaymentView').classList.add('hidden');
+            document.getElementById('manualPaymentView').classList.remove('hidden');
+            resetAddMoney();
+            loadDepositHistory();
+            toggleAddMoneyView('form');
+        }
+    }
+    if(secId === 'history') {
+        loadHistory();
+    }
+    window.scrollTo(0, 0);
+}
+
+function loadHistory() {
+    const list = document.getElementById('historyList');
+    if (!currentUser) return;
+
+    list.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin text-[#1a56db]"></i> Loading History...</div>';
+
+    db.collection('orders').where('userId', '==', currentUser.uid).limit(50).get()
+        .then(snapshot => {
+            if (snapshot.empty) {
+                list.innerHTML = `<div class="flex flex-col items-center justify-center py-10 text-gray-400"><i class="fas fa-shopping-basket text-4xl mb-3 opacity-30"></i><p>No orders found yet.</p></div>`;
+                return;
+            }
+
+            const orders = [];
+            snapshot.forEach(doc => {
+                orders.push(doc.data());
+            });
+
+            orders.sort((a, b) => {
+                const dateA = a.date ? a.date.toDate() : new Date(0);
+                const dateB = b.date ? b.date.toDate() : new Date(0);
+                return dateB - dateA;
+            });
+
+            list.innerHTML = "";
+            
+            orders.forEach(d => {
+                let statusColor = "bg-yellow-100 text-yellow-700 border-yellow-500";
+                let icon = "fa-clock";
+
+                const status = d.status ? d.status.toLowerCase() : 'pending';
+                if (status === 'success' || status === 'complete' || status === 'completed') {
+                    statusColor = "bg-green-100 text-green-700 border-green-500";
+                    icon = "fa-check-circle";
+                } else if (status === 'cancel' || status === 'rejected') {
+                    statusColor = "bg-red-100 text-red-700 border-red-500";
+                    icon = "fa-times-circle";
+                }
+
+                let dateStr = "N/A";
+                if (d.date && d.date.toDate) {
+                    dateStr = d.date.toDate().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric', hour12: true });
+                }
+
+                let detailsInfo = d.redeemCode ? `
+                    <div class="mt-2 bg-blue-50 border border-blue-200 rounded p-2 text-center">
+                        <p class="text-[10px] text-[#1a56db] font-bold uppercase">Your Voucher Code</p>
+                        <p class="text-sm font-mono font-bold text-gray-800 select-all tracking-wider break-all">${d.redeemCode}</p>
+                    </div>` : `
+                    <div class="mt-1 inline-block bg-gray-50 border border-gray-200 rounded px-2 py-0.5">
+                        <p class="text-[10px] text-gray-500 font-mono">ID: <span class="text-gray-700 font-bold select-all">${d.playerId}</span></p>
+                    </div>`;
+
+                list.innerHTML += `
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-4 overflow-hidden relative">
+                        <div class="absolute left-0 top-0 bottom-0 w-1.5 ${statusColor.split(' ')[2]}"></div>
+                        <div class="p-3 pl-4">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <h4 class="font-bold text-gray-800 text-sm flex items-center gap-1"><i class="fas fa-gamepad text-[#1a56db] text-xs"></i> ${d.gameName}</h4>
+                                    <p class="text-[10px] text-gray-400 mt-0.5"><i class="far fa-calendar-alt"></i> ${dateStr}</p>
+                                </div>
+                                <span class="${statusColor.split(' border')[0]} text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wide flex items-center gap-1"><i class="fas ${icon}"></i> ${d.status}</span>
+                            </div>
+                            <div class="h-px bg-gray-100 w-full my-2"></div>
+                            <div class="flex justify-between items-center">
+                                <div class="w-full">
+                                    <p class="text-xs font-bold text-gray-700">${d.productName}</p>
+                                    ${detailsInfo}
+                                </div>
+                                <div class="text-right min-w-[60px]">
+                                    <p class="text-[10px] text-gray-400 mb-0.5">Price</p>
+                                    <p class="text-lg font-bold text-[#1a56db]">৳${d.price}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+        })
+        .catch(error => {
+            console.error("Error loading order history: ", error);
+            list.innerHTML = `<div class="text-center text-red-500 py-4 text-xs font-mono">Error: ${error.message}</div>`;
+        });
+}
+
+function loadRecentOrdersGlobal() {
+    const container = document.getElementById('latestOrdersList');
+    db.collection('orders').orderBy('date', 'desc').limit(5)
+      .onSnapshot((snapshot) => {
+          if (snapshot.empty) {
+              container.innerHTML = '<div class="text-center text-gray-400 text-xs py-2">No recent orders</div>'; return;
+          }
+          container.innerHTML = "";
+          snapshot.forEach(doc => {
+              const data = doc.data();
+              let displayName = "Customer";
+              if(data.userName) { displayName = data.userName.includes('@') ? data.userName.split('@')[0] : data.userName; }
+              const firstChar = displayName.charAt(0).toUpperCase();
+              let statusText = (data.status || 'pending').toLowerCase();
+              let statusBadgeClass = 'bg-red-500 text-white';
+              if (['success', 'complete', 'completed'].includes(statusText)) {
+                  statusBadgeClass = 'bg-[#198754] text-white';
+                  statusText = 'completed';
+              } else if (['pending', 'processing'].includes(statusText)) {
+                  statusBadgeClass = 'bg-[#ffc107] text-gray-800';
+                  statusText = 'processing';
+              }
+              container.innerHTML += `<div class="bg-white p-3 rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-between"><div class="flex items-center gap-3 overflow-hidden"><div class="w-11 h-11 min-w-[44px] bg-[#1a56db] rounded-full flex items-center justify-center text-white text-lg font-sans font-medium shadow-sm">${firstChar}</div><div class="flex flex-col truncate"><span class="text-gray-600 font-bold text-sm truncate">${displayName}</span><span class="text-gray-500 text-[11px] font-medium truncate">${data.productName} - ${data.price} ৳</span></div></div><div class="${statusBadgeClass} px-3 py-1 rounded-full text-[10px] font-bold capitalize shadow-sm whitespace-nowrap ml-2">${statusText}</div></div>`;
+          });
+      }, (error) => {
+           console.error("Error loading recent orders: ", error);
+           container.innerHTML = `<div class="text-center text-red-500 py-4 text-xs font-mono">Could not load recent orders.</div>`;
+      });
+}
+
+function toggleFabMenu() {
+    const fabContainer = document.getElementById('fabContainer');
+    const helpText = document.getElementById('fabHelpText');
+    fabContainer.classList.toggle('is-open');
+
+    if (fabContainer.classList.contains('is-open')) {
+        helpText.classList.add('opacity-0');
+    } else {
+        helpText.classList.remove('opacity-0');
+    }
+}
+
+function loadBanners() {
+    db.collection("banners").onSnapshot((snapshot) => {
+        const wrapper = document.getElementById('sliderWrapper');
+        let slidesHTML = "";
+        snapshot.forEach((doc) => { if(doc.data().image) slidesHTML += `<img src="${doc.data().image}" class="w-full h-full object-cover flex-shrink-0">`; });
+        if(slidesHTML) { wrapper.innerHTML = slidesHTML; startSlider(); }
+    });
+}
+
+let sliderInterval;
+function startSlider() {
+    clearInterval(sliderInterval);
+    let idx = 0;
+    const wrapper = document.getElementById('sliderWrapper');
+    const count = wrapper.children.length;
+    if(count <= 1) return;
+    sliderInterval = setInterval(() => {
+        idx = (idx + 1) % count;
+        wrapper.style.transform = `translateX(-${idx * 100}%)`;
+    }, 3000);
+}
+
+// ===== ADD MONEY =====
+function toggleAddMoneyView(view) {
+    const addMoneyContent = document.getElementById('addMoneyContent');
+    const historyContent = document.getElementById('depositHistoryContent');
+    const btnAddMoney = document.getElementById('btnAddmoneyView');
+    const btnHistory = document.getElementById('btnHistoryView');
+
+    if (view === 'form') {
+        addMoneyContent.classList.remove('hidden');
+        historyContent.classList.add('hidden');
+        btnAddMoney.classList.add('bg-white', 'shadow', 'text-[#1a56db]');
+        btnHistory.classList.remove('bg-white', 'shadow', 'text-[#1a56db]');
+    } else {
+        addMoneyContent.classList.add('hidden');
+        historyContent.classList.remove('hidden');
+        btnHistory.classList.add('bg-white', 'shadow', 'text-[#1a56db]');
+        btnAddMoney.classList.remove('bg-white', 'shadow', 'text-[#1a56db]');
+    }
+}
+
+function loadDepositHistory() {
+    const list = document.getElementById('depositHistoryList');
+    if (!currentUser) return;
+    list.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin text-[#1a56db]"></i> Loading History...</div>';
+
+    db.collection('deposits').where('userId', '==', currentUser.uid).orderBy('date', 'desc').limit(30).get()
+        .then(snapshot => {
+            if (snapshot.empty) {
+                list.innerHTML = `<div class="flex flex-col items-center justify-center py-10 text-gray-400"><i class="fas fa-receipt text-4xl mb-3 opacity-30"></i><p>No deposit history found.</p></div>`;
+                return;
+            }
+
+            const deposits = [];
+            snapshot.forEach(doc => {
+                deposits.push(doc.data());
+            });
+
+            list.innerHTML = "";
+            deposits.forEach(d => {
+                let statusColor = "bg-yellow-100 text-yellow-700";
+                let icon = "fa-clock";
+
+                const status = d.status ? d.status.toLowerCase() : 'pending';
+                if (status === 'success' || status === 'approved') {
+                    statusColor = "bg-green-100 text-green-700";
+                    icon = "fa-check-circle";
+                } else if (status === 'rejected') {
+                    statusColor = "bg-red-100 text-red-700";
+                    icon = "fa-times-circle";
+                }
+                
+                let dateStr = "N/A";
+                if (d.date && d.date.toDate) {
+                    dateStr = d.date.toDate().toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+                }
+                
+                const method = d.method || 'Manual';
+                let trxText = method.toLowerCase().includes('auto') 
+                    ? `<p class="text-[10px] text-gray-500 font-mono select-all">Auto TrxID: <span class="text-gray-700 font-semibold">${d.trxId}</span></p>`
+                    : `<p class="text-[10px] text-gray-500 font-mono select-all">TrxID: <span class="text-gray-700 font-semibold">${d.trxId}</span></p>`;
+
+                list.innerHTML += `
+                    <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                        <div class="flex-grow">
+                            <div class="flex justify-between items-center mb-1">
+                                <p class="text-lg font-bold text-[#1a56db]">৳${d.amount}</p>
+                                <span class="${statusColor} text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide flex items-center gap-1"><i class="fas ${icon}"></i> ${d.status}</span>
+                            </div>
+                            ${trxText}
+                            <p class="text-[10px] text-gray-400 mt-1">${dateStr}</p>
+                        </div>
+                    </div>`;
+            });
+        })
+        .catch(error => {
+            console.error("Error loading deposit history: ", error);
+            list.innerHTML = `<div class="text-center text-red-500 py-4 text-xs font-mono">Error: ${error.message}</div>`;
+        });
+}
+
+function showPaymentForm(methodName) {
+    document.getElementById('paymentMethodsGrid').classList.add('hidden');
+    document.getElementById('paymentFormContainer').classList.remove('hidden');
+    document.getElementById('formMethodName').innerText = methodName;
+    const icon = document.getElementById('formIcon');
+    icon.className = `payment-icon ${methodName.toLowerCase()}`;
+    if (methodName === 'bKash') icon.innerText = 'bK';
+    else if (methodName === 'Nagad') icon.innerText = 'NG';
+    else icon.innerText = 'RK';
+    
+    db.collection("admin").doc("payment").get().then(doc => {
+        if(doc.exists) document.getElementById('adminNumber').innerText = doc.data()[methodName.toLowerCase()] || "01xxxxxxxxx";
+    });
+}
+
+function resetAddMoney() {
+    document.getElementById('paymentMethodsGrid').classList.remove('hidden');
+    document.getElementById('paymentFormContainer').classList.add('hidden');
+    document.getElementById('depAmount').value = "";
+    document.getElementById('depTrx').value = "";
+}
+
+function submitDeposit() {
+    const amt = document.getElementById('depAmount').value;
+    const trx = document.getElementById('depTrx').value;
+    if(!amt || !trx) return Swal.fire('Error', 'Fill all fields', 'warning');
+    
+    Swal.showLoading();
+    db.collection('deposits').add({
+        userId: currentUser.uid, amount: parseInt(amt), trxId: trx,
+        status: 'pending', date: new Date(), userEmail: currentUser.email
+    }).then(() => {
+        Swal.fire('Submitted', 'Your request has been sent. Please wait for approval.', 'success');
+        resetAddMoney();
+        loadDepositHistory();
+        toggleAddMoneyView('history');
+    }).catch(err => Swal.fire('Error', err.message, 'error'));
+}
+
+function copyNumber() {
+    navigator.clipboard.writeText(document.getElementById('adminNumber').innerText);
+    Swal.fire({toast:true, title:'Copied', icon:'success', position:'top-end', showConfirmButton:false, timer:1000});
+}
+
+// ===== AUTO PAYMENT =====
+function showAutoPaymentForm(methodName) {
+    document.getElementById('autoPaymentMethodsGrid').classList.add('hidden');
+    document.getElementById('autoPaymentFormContainer').classList.remove('hidden');
+    document.getElementById('autoFormMethodName').innerText = methodName;
+    const icon = document.getElementById('autoFormIcon');
+    icon.className = `payment-icon ${methodName.toLowerCase()}`;
+    if (methodName === 'bKash') icon.innerText = 'bK';
+    else if (methodName === 'Nagad') icon.innerText = 'NG';
+    else icon.innerText = 'RK';
+    
+    db.collection("admin").doc("payment").get().then(doc => {
+        if(doc.exists) document.getElementById('autoAdminNumber').innerText = doc.data()[methodName.toLowerCase()] || "Not Set";
+    });
+}
+
+function resetAutoAddMoney() {
+    document.getElementById('autoPaymentMethodsGrid').classList.remove('hidden');
+    document.getElementById('autoPaymentFormContainer').classList.add('hidden');
+    document.getElementById('autoDepTrx').value = "";
+}
+
+function copyAutoNumber() {
+    navigator.clipboard.writeText(document.getElementById('autoAdminNumber').innerText);
+    Swal.fire({toast:true, title:'Copied', icon:'success', position:'top-end', showConfirmButton:false, timer:1000});
+}
+
+async function verifyAutoPayment() {
+    const trxId = document.getElementById('autoDepTrx').value.trim().toUpperCase();
+    if(!trxId) return Swal.fire('ত্রুটি', 'দয়া করে ট্রানজেকশন আইডি লিখুন।', 'warning');
+
+    Swal.fire({
+        title: 'যাচাই করা হচ্ছে...',
+        text: 'দয়া করে অপেক্ষা করুন।',
+        didOpen: () => { Swal.showLoading() }
+    });
+
+    const existingTrxCheck = await db.collection('deposits').where('trxId', '==', trxId).limit(1).get();
+    if (!existingTrxCheck.empty) {
+        return Swal.fire('ব্যবহৃত', 'এই ট্রানজেকশন আইডিটি ইতিমধ্যে ব্যবহার করা হয়েছে।', 'error');
+    }
+
+    rtdb.ref('XNXANIKPAY').orderByChild('txid').equalTo(trxId).once('value', async (snapshot) => {
+        if (!snapshot.exists()) {
+            return Swal.fire('পাওয়া যায়নি', 'আপনার ট্রানজেকশন আইডিটি খুঁজে পাওয়া যায়নি।', 'error');
+        }
+        
+        let paymentData = null;
+        snapshot.forEach((childSnapshot) => {
+            paymentData = childSnapshot.val();
+        });
+
+        if (!paymentData || !paymentData.amount) {
+            return Swal.fire('ত্রুটি', 'পেমেন্ট এর তথ্য সঠিক নয়। সাপোর্টে যোগাযোগ করুন।', 'error');
+        }
+
+        const amountToAdd = parseInt(paymentData.amount);
+        const userRef = db.collection('users').doc(currentUser.uid);
+
+        try {
+            await db.runTransaction(async (transaction) => {
+                const userDoc = await transaction.get(userRef);
+                if (!userDoc.exists) {
+                    throw "User not found!";
+                }
+                const newBalance = (userDoc.data().balance || 0) + amountToAdd;
+                transaction.update(userRef, { balance: newBalance });
+            });
+            
+            await db.collection('deposits').add({
+                userId: currentUser.uid,
+                userEmail: currentUser.email,
+                amount: amountToAdd,
+                trxId: trxId,
+                status: 'approved',
+                method: 'Auto Pay',
+                date: new Date()
+            });
+
+            Swal.fire('সফল', `আপনার একাউন্টে ৳${amountToAdd} সফলভাবে যোগ করা হয়েছে।`, 'success');
+            resetAutoAddMoney();
+            
+        } catch (error) {
+            console.error("Auto payment error:", error);
+            Swal.fire('ব্যর্থ', 'টাকা যোগ করতে সমস্যা হয়েছে। অনুগ্রহ করে সাপোর্টে যোগাযোগ করুন।', 'error');
+        }
+    });
+}
+
+// ===== SETTINGS =====
+function loadGlobalSettings() {
+    db.collection("settings").doc("general").onSnapshot((doc) => {
+        if (doc.exists) {
+            const data = doc.data();
+            isAutoPayEnabled = data.autoPayEnabled === true;
+        }
+    });
+}
+loadGlobalSettings();
+
+// ===== DEVELOPER CREDIT =====
+window.onload = function() {
+    const expectedDeveloper = "Developer Iasan";
+    const developerElement = document.getElementById('developerCredit');
+
+    if (!developerElement) {
+        showTamperingError();
+        return;
+    }
+
+    if (developerElement.innerText.trim() !== expectedDeveloper) {
+        showTamperingError();
+    }
+
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.target.innerText.trim() !== expectedDeveloper) {
+                showTamperingError();
+                observer.disconnect();
+            }
+        });
+    });
+
+    const config = { characterData: true, subtree: true };
+    observer.observe(developerElement, config);
+};
+
+function showTamperingError() {
+    const appContent = document.getElementById('appContent');
+    if(appContent) appContent.style.display = 'none';
+
+    const errorDiv = document.createElement('div');
+    errorDiv.style.position = 'fixed';
+    errorDiv.style.top = '0';
+    errorDiv.style.left = '0';
+    errorDiv.style.width = '100vw';
+    errorDiv.style.height = '100vh';
+    errorDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.9)';
+    errorDiv.style.color = 'white';
+    errorDiv.style.display = 'flex';
+    errorDiv.style.flexDirection = 'column';
+    errorDiv.style.justifyContent = 'center';
+    errorDiv.style.alignItems = 'center';
+    errorDiv.style.zIndex = '99999';
+    errorDiv.style.fontFamily = "'Poppins', sans-serif";
+    errorDiv.innerHTML = `
+        <div style="text-align: center; padding: 20px;">
+            <h1 style="font-size: 2em; color: #ef4444; margin-bottom: 15px;">Website Error</h1>
+            <p style="font-size: 1.1em; color: #d1d5db;">এই ওয়েবসাইট টি বানিয়েছে Developer Iasan | Owner Developer Iasan</p>
+            <p style="font-size: 0.9em; color: #9ca3af; margin-top: 20px;">Developer নাম টাকে বদলায় নিজে কে Developer ভাববেন না | Developer Iasan এই নাম দিলে অ্যাপ ঠিক হবে</p>
+        </div>
+    `;
+    document.body.appendChild(errorDiv);
+}
+</script>
+</body>
+</html>
