@@ -10,12 +10,21 @@ except RuntimeError:
     asyncio.set_event_loop(asyncio.new_event_loop())
 
 import os
+import sys
 import re
 import json
 import time
+import traceback
 import tempfile
 import shutil
 from datetime import datetime
+
+# ==================== DEBUG INFO ====================
+print("=" * 60)
+print(f"[DEBUG] Python: {sys.version}")
+print(f"[DEBUG] CWD: {os.getcwd()}")
+print(f"[DEBUG] Files: {os.listdir('.')}")
+print("=" * 60)
 
 from telegram import (
     Update, InlineKeyboardButton, InlineKeyboardMarkup,
@@ -32,14 +41,35 @@ import blackboxprotobuf
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
 
+# ==================== PROTOBUF IMPORT (DEBUG) ====================
+try:
+    import google.protobuf
+    print(f"[DEBUG] protobuf version: {google.protobuf.__version__}")
+except Exception as e:
+    print(f"[DEBUG] protobuf check failed: {e}")
+
 try:
     import my_pb2
+    print("[DEBUG] my_pb2 imported OK")
+except Exception as e:
+    print(f"[DEBUG] my_pb2 IMPORT FAILED:")
+    traceback.print_exc()
+    raise SystemExit(f"[!] my_pb2 import failed: {type(e).__name__}: {e}")
+
+try:
     import output_pb2
-except ImportError:
-    raise SystemExit("[!] my_pb2.py ar output_pb2.py same folder e rakho.")
+    print("[DEBUG] output_pb2 imported OK")
+except Exception as e:
+    print(f"[DEBUG] output_pb2 IMPORT FAILED:")
+    traceback.print_exc()
+    raise SystemExit(f"[!] output_pb2 import failed: {type(e).__name__}: {e}")
+
+print("[DEBUG] All imports OK — starting bot...")
+print("=" * 60)
+
 
 # ==================== CONFIG ====================
-BOT_TOKEN = "8913853842:AAF_Ba0T_PinBqCLWNjvMuqQOHV0jza8jNY"
+BOT_TOKEN = "8913853842:AAHWQyNY-SisDL7X84h7AzDDKkFuF-0fDDw"
 
 AES_KEY = bytes([89, 103, 38, 116, 99, 37, 68, 69, 117, 104, 54, 37, 90, 99, 94, 56])
 AES_IV  = bytes([54, 111, 121, 90, 68, 114, 50, 50, 69, 51, 121, 99, 104, 106, 77, 37])
@@ -68,7 +98,7 @@ ULTRA_RARE_IDS = {710047022}
 user_sessions = {}
 user_tasks = {}
 user_stats = {}
-user_lang = {}   # user_id -> "bn" or "en"
+user_lang = {}
 
 
 # ==================== TRANSLATIONS ====================
@@ -208,7 +238,6 @@ def get_lang(uid):
 
 
 def t(uid, key, **kwargs):
-    """Translate key for user's language"""
     lang = get_lang(uid)
     txt = T.get(lang, T["en"]).get(key, T["en"].get(key, key))
     return txt.format(**kwargs) if kwargs else txt
@@ -581,11 +610,9 @@ async def handle_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     uid = q.from_user.id
     data = q.data
 
-    # ---------- Language Switch ----------
     if data.startswith("lang|"):
         lang = data.split("|")[1]
         user_lang[uid] = lang
-        # Update keyboard in user's new language
         await q.message.reply_text(
             t(uid, "lang_changed"),
             parse_mode=ParseMode.MARKDOWN,
@@ -789,13 +816,11 @@ async def run_spinner_task(update, uid):
     finally:
         rep_task.cancel()
 
-    # Update stats
     st = get_or_create_stats(uid)
     st["total_spins"] += stats["items"]
     st["ultra"] += stats["ultra"]
     st["rare"] += stats["rare"]
 
-    # Save
     outdir = os.path.join(tmpdir, "results")
     os.makedirs(outdir, exist_ok=True)
     with open(os.path.join(outdir, "all_items.json"), "w", encoding="utf-8") as f:
@@ -807,7 +832,6 @@ async def run_spinner_task(update, uid):
     with open(os.path.join(outdir, "summary.txt"), "w", encoding="utf-8") as f:
         f.write("\n".join(summary) if summary else "No rare items found.")
 
-    # Final
     try:
         await progress_msg.edit_text(
             f"{t(uid, 'done')}\n"
@@ -864,7 +888,6 @@ def main():
     app.add_handler(CommandHandler("start", cmd_start))
     app.add_handler(CommandHandler("cancel", msg_cancel))
 
-    # Reply keyboard — both languages
     spin_labels = ["🚀 New Spin", "🚀 নতুন স্পিন"]
     stats_labels = ["📊 My Stats", "📊 আমার স্ট্যাটস"]
     prof_labels = ["👤 Profile", "👤 প্রোফাইল"]
